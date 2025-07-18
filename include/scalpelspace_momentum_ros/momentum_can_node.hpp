@@ -20,4 +20,6 @@ namespace scalpelspace_momentum_ros {
     rclcpp::TimerBase::SharedPtr timer_;
   };
 
+} // namespace scalpelspace_momentum_ros
+
 #endif // SCALPELSPACE_MOMENTUM_ROS_MOMENTUM_CAN_NODE_H
