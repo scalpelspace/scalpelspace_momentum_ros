@@ -1,4 +1,4 @@
-#include "momentum_can_node.hpp"
+#include "scalpelspace_momentum_ros/momentum_can_node.hpp"
 
 #include <chrono>
 #include <cstring>
