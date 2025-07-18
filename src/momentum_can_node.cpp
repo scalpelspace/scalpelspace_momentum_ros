@@ -8,7 +8,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <vector>
 
 namespace scalpelspace_momentum_ros {
 
@@ -16,7 +15,7 @@ namespace scalpelspace_momentum_ros {
       : Node("momentum_can_node", options) {
     can_socket_ = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (can_socket_ < 0) {
-      RCLCPP_FATAL(this->get_logger(), "Failed to open CAN socket");
+      RCLCPP_FATAL(get_logger(), "Failed to open CAN socket");
       rclcpp::shutdown();
       return;
     }
@@ -24,7 +23,7 @@ namespace scalpelspace_momentum_ros {
     struct ifreq ifr;
     std::strncpy(ifr.ifr_name, "can0", IFNAMSIZ - 1);
     if (ioctl(can_socket_, SIOCGIFINDEX, &ifr) < 0) {
-      RCLCPP_FATAL(this->get_logger(), "ioctl failed");
+      RCLCPP_FATAL(get_logger(), "ioctl failed");
       rclcpp::shutdown();
       return;
     }
@@ -34,15 +33,14 @@ namespace scalpelspace_momentum_ros {
     addr.can_ifindex = ifr.ifr_ifindex;
     if (bind(can_socket_, reinterpret_cast<struct sockaddr *>(&addr),
              sizeof(addr)) < 0) {
-      RCLCPP_FATAL(this->get_logger(), "Bind failed");
+      RCLCPP_FATAL(get_logger(), "Bind failed");
       rclcpp::shutdown();
       return;
     }
 
-    pub_ = this->create_publisher<can_msgs::msg::Frame>("received_frames", 10);
-    timer_ =
-        this->create_wall_timer(std::chrono::milliseconds(10),
-                                std::bind(&MomentumCanNode::poll_can, this));
+    pub_ = create_publisher<can_msgs::msg::Frame>("received_frames", 10);
+    timer_ = create_wall_timer(std::chrono::milliseconds(10),
+                               std::bind(&MomentumCanNode::poll_can, this));
   }
 
   MomentumCanNode::~MomentumCanNode() {
@@ -60,7 +58,9 @@ namespace scalpelspace_momentum_ros {
       msg.dlc = frame.can_dlc;
       msg.is_extended = (frame.can_id & CAN_EFF_FLAG);
       msg.is_rtr = (frame.can_id & CAN_RTR_FLAG);
-      msg.data = std::vector<uint8_t>(frame.data, frame.data + frame.can_dlc);
+      for (size_t i = 0; i < frame.can_dlc && i < msg.data.size(); ++i) {
+        msg.data[i] = frame.data[i];
+      }
       pub_->publish(msg);
     }
   }
