@@ -62,6 +62,21 @@ namespace scalpelspace_momentum_ros {
         msg.data[i] = frame.data[i];
       }
       pub_->publish(msg);
+
+      // TODO: Delete dev test.
+      std::ostringstream oss;
+      oss << "Received CAN frame: ID=0x" << std::hex << std::uppercase
+          << frame.can_id << std::dec
+          << " DLC=" << static_cast<int>(frame.can_dlc) << " DATA=[";
+      for (size_t i = 0; i < frame.can_dlc; ++i) {
+        if (i)
+          oss << ' ';
+        oss << "0x" << std::setw(2) << std::setfill('0') << std::hex
+            << std::uppercase << static_cast<int>(frame.data[i]);
+      }
+      oss << "]";
+
+      RCLCPP_INFO(get_logger(), "%s", oss.str().c_str());
     }
   }
 
