@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+    <name>scalpelspace_momentum_ros</name>
+    <version>0.1.0</version>
+    <description>ROS2 package for CAN communication with the ScalpelSpace
+        Momentum dev board
+    </description>
+
+    <maintainer email="info@scalpelspace.com">ScalpelSpace</maintainer>
+    <license>MIT</license>
+
+    <buildtool_depend>ament_cmake</buildtool_depend>
+
+    <depend>rclcpp</depend>
+
+    <depend>can_msgs</depend>
+    <depend>std_msgs</depend>
+
+    <export>
+        <build_type>ament_cmake</build_type>
+    </export>
+</package>
