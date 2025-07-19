@@ -1,6 +1,14 @@
-/** Auto-generated CAN message definitions from DBC file. */
+/*******************************************************************************
+ * @file momentum_can_dbc.c
+ * @brief Auto-generated CAN message definitions from DBC file.
+ *******************************************************************************
+ */
+
+/** Includes. *****************************************************************/
 
 #include "momentum_can_dbc.h"
+
+/** Public variables. *********************************************************/
 
 const can_message_t dbc_messages[] = {
     {
