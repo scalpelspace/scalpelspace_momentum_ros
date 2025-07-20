@@ -129,6 +129,20 @@ uint32_t double_to_raw(double physical_value, const can_signal_t *signal);
 void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
                        uint32_t raw_value);
 
+/**
+ * @brief Extract a signal value from a CAN message payload.
+ *
+ * This function extracts the raw signal value from the provided data array
+ * using the specified bit-position, length, and byte order. It then applies
+ * scaling and offset to convert the raw value into a physical value.
+ *
+ * @param signal Pointer to the CAN signal configuration.
+ * @param data Pointer to the raw CAN message payload.
+ *
+ * @return The decoded physical signal value.
+ */
+float decode_signal(const can_signal_t *signal, const uint8_t *data);
+
 /** CPP guard close. **********************************************************/
 
 #ifdef __cplusplus
