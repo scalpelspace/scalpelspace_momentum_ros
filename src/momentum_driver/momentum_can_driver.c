@@ -6,7 +6,7 @@
 
 /** Includes. *****************************************************************/
 
-#include "momentum_can_driver.h"
+#include "scalpelspace_momentum_ros/momentum_driver/momentum_can_driver.h"
 #include "math.h"
 
 /** Public functions. *********************************************************/
