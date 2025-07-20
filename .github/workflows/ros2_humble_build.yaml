@@ -1,7 +1,7 @@
 ################################################################################
 # ros2_humble_build.yaml
 #
-# Build ROS2 Humble package targeting C/Cpp via colcon.
+# Build ROS2 Humble package targeting C/Cpp code base via colcon.
 #
 # Utilizes ros-tooling's docker container based ROS images, see
 # https://github.com/ros-tooling/action-ros-ci.
