@@ -6,7 +6,7 @@
 
 /** Includes. *****************************************************************/
 
-#include "momentum_spi_driver.h"
+#include "scalpelspace_momentum_ros/momentum_driver/momentum_spi_driver.h"
 
 /** Private functions. ********************************************************/
 
