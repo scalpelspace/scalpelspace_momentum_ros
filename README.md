@@ -1,5 +1,7 @@
 # scalpelspace_momentum_ros
 
+![ros2_humble_build](https://github.com/scalpelspace/scalpelspace_momentum_ros/actions/workflows/ros2_humble_build.yaml/badge.svg)
+
 ROS2 package for CAN communication with the ScalpelSpace Momentum dev board.
 
 ---
