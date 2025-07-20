@@ -7,15 +7,15 @@
 #ifndef MOMENTUM_CAN_DBC_H
 #define MOMENTUM_CAN_DBC_H
 
+/** Includes. *****************************************************************/
+
+#include "momentum_can_driver.h"
+
 /** CPP guard open. ***********************************************************/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/** Includes. *****************************************************************/
-
-#include "momentum_can_driver.h"
 
 /** Public variables. *********************************************************/
 
