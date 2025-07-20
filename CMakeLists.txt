@@ -6,7 +6,10 @@ find_package(rclcpp REQUIRED)
 find_package(can_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 
-include_directories(include)
+include_directories(
+        include
+        include/scalpelspace_momentum_ros/momentum_driver
+)
 
 add_executable(momentum_can_node src/momentum_can_node.cpp)
 ament_target_dependencies(momentum_can_node
