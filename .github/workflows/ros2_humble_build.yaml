@@ -1,0 +1,45 @@
+################################################################################
+# ros2_humble_build.yaml
+#
+# Build ROS2 Humble package targeting C/Cpp via colcon.
+#
+# Utilizes ros-tooling's docker container based ROS images, see
+# https://github.com/ros-tooling/action-ros-ci.
+################################################################################
+
+name: ROS2 Humble build
+
+on:
+  push:
+    paths:
+      - "**/*.h"
+      - "**/*.c"
+      - "**/*.hpp"
+      - "**/*.cpp"
+      - "ros2_humble_build.yaml"
+    branches:
+      - main
+  pull_request:
+    paths:
+      - "**/*.h"
+      - "**/*.c"
+      - "**/*.hpp"
+      - "**/*.cpp"
+      - "ros2_humble_build.yaml"
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: rostooling/setup-ros-docker:ubuntu-jammy-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build package
+        uses: ros-tooling/action-ros-ci@v0.4
+        with:
+          package-name: scalpelspace_momentum_ros
+          target-ros2-distro: humble
