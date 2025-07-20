@@ -16,7 +16,7 @@ on:
       - "**/*.c"
       - "**/*.hpp"
       - "**/*.cpp"
-      - "ros2_humble_build.yaml"
+      - ".github/workflows/ros2_humble_build.yaml"
     branches:
       - main
   pull_request:
@@ -25,7 +25,7 @@ on:
       - "**/*.c"
       - "**/*.hpp"
       - "**/*.cpp"
-      - "ros2_humble_build.yaml"
+      - ".github/workflows/ros2_humble_build.yaml"
     branches:
       - main
 
