@@ -1,5 +1,5 @@
 #include "scalpelspace_momentum_ros/momentum_can_node.hpp"
-#include "momentum_driver.h"
+#include "scalpelspace_momentum_ros/momentum_driver/momentum_driver.h"
 #include <chrono>
 #include <cstring>
 #include <linux/can.h>
