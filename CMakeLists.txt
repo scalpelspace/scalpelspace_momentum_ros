@@ -11,7 +11,13 @@ include_directories(
         include/scalpelspace_momentum_ros/momentum_driver
 )
 
-add_executable(momentum_can_node src/momentum_can_node.cpp)
+add_executable(momentum_can_node
+        src/momentum_can_node.cpp
+        src/momentum_driver/momentum_can_dbc.c
+        src/momentum_driver/momentum_can_driver.c
+        src/momentum_driver/momentum_spi_driver.c
+)
+
 ament_target_dependencies(momentum_can_node
         rclcpp
         can_msgs
