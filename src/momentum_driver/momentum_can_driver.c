@@ -9,42 +9,6 @@
 #include "momentum_can_driver.h"
 #include "math.h"
 
-/** Private functions. ********************************************************/
-
-/**
- * @brief Extract a signal value from a CAN message payload.
- *
- * This function extracts the raw signal value from the provided data array
- * using the specified bit-position, length, and byte order. It then applies
- * scaling and offset to convert the raw value into a physical value.
- *
- * @param signal Pointer to the CAN signal configuration.
- * @param data Pointer to the raw CAN message payload.
- *
- * @return The decoded physical signal value.
- */
-float decode_signal(const can_signal_t *signal, const uint8_t *data) {
-  uint64_t raw_value = 0;
-
-  // Extract raw bits from the CAN message payload.
-  for (int i = 0; i < signal->bit_length; i++) {
-    int bit_position = signal->start_bit + i;
-    int byte_index = bit_position / 8;
-    int bit_index = bit_position % 8;
-
-    // Use the enumerated constant for byte order.
-    if (signal->byte_order == CAN_BIG_ENDIAN) {
-      raw_value |= ((data[byte_index] >> (7 - bit_index)) & 0x1)
-                   << (signal->bit_length - 1 - i);
-    } else { // CAN_LITTLE_ENDIAN.
-      raw_value |= ((data[byte_index] >> bit_index) & 0x1) << i;
-    }
-  }
-
-  // Convert raw value to physical value by applying scale and offset.
-  return ((float)raw_value * signal->scale) + signal->offset;
-}
-
 /** Public functions. *********************************************************/
 
 uint32_t uint_to_raw(uint32_t physical_value, const can_signal_t *signal) {
@@ -116,4 +80,26 @@ void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
     uint8_t raw_bit = (raw_value >> bit) & 0x1U;
     data[byte_index] |= (raw_bit << bit_index);
   }
+}
+
+float decode_signal(const can_signal_t *signal, const uint8_t *data) {
+  uint64_t raw_value = 0;
+
+  // Extract raw bits from the CAN message payload.
+  for (int i = 0; i < signal->bit_length; i++) {
+    int bit_position = signal->start_bit + i;
+    int byte_index = bit_position / 8;
+    int bit_index = bit_position % 8;
+
+    // Use the enumerated constant for byte order.
+    if (signal->byte_order == CAN_BIG_ENDIAN) {
+      raw_value |= ((data[byte_index] >> (7 - bit_index)) & 0x1)
+                   << (signal->bit_length - 1 - i);
+    } else { // CAN_LITTLE_ENDIAN.
+      raw_value |= ((data[byte_index] >> bit_index) & 0x1) << i;
+    }
+  }
+
+  // Convert raw value to physical value by applying scale and offset.
+  return ((float)raw_value * signal->scale) + signal->offset;
 }

@@ -1,5 +1,5 @@
 #include "scalpelspace_momentum_ros/momentum_can_node.hpp"
-
+#include "momentum_driver.h"
 #include <chrono>
 #include <cstring>
 #include <linux/can.h>
@@ -52,32 +52,49 @@ namespace scalpelspace_momentum_ros {
   void MomentumCanNode::poll_can() {
     struct can_frame frame;
     ssize_t nbytes = read(can_socket_, &frame, sizeof(frame));
-    if (nbytes > 0) {
-      can_msgs::msg::Frame msg;
-      msg.id = frame.can_id;
-      msg.dlc = frame.can_dlc;
-      msg.is_extended = (frame.can_id & CAN_EFF_FLAG);
-      msg.is_rtr = (frame.can_id & CAN_RTR_FLAG);
-      for (size_t i = 0; i < frame.can_dlc && i < msg.data.size(); ++i) {
-        msg.data[i] = frame.data[i];
-      }
-      pub_->publish(msg);
 
-      // TODO: Delete dev test.
-      std::ostringstream oss;
-      oss << "Received CAN frame: ID=0x" << std::hex << std::uppercase
-          << frame.can_id << std::dec
-          << " DLC=" << static_cast<int>(frame.can_dlc) << " DATA=[";
-      for (size_t i = 0; i < frame.can_dlc; ++i) {
-        if (i)
-          oss << ' ';
-        oss << "0x" << std::setw(2) << std::setfill('0') << std::hex
-            << std::uppercase << static_cast<int>(frame.data[i]);
-      }
-      oss << "]";
-
-      RCLCPP_INFO(get_logger(), "%s", oss.str().c_str());
+    if (nbytes <= 0) {
+      return;
     }
+
+    // Publish ROS message of raw CAN message.
+    can_msgs::msg::Frame msg;
+    msg.id = frame.can_id;
+    msg.dlc = frame.can_dlc;
+    msg.is_extended = (frame.can_id & CAN_EFF_FLAG);
+    msg.is_rtr = (frame.can_id & CAN_RTR_FLAG);
+    for (size_t i = 0; i < frame.can_dlc && i < msg.data.size(); ++i) {
+      msg.data[i] = frame.data[i];
+    }
+    pub_->publish(msg);
+
+    // TODO: Delete dev, print.
+    std::ostringstream oss;
+    oss << "CAN ID=0x" << std::hex << std::uppercase << frame.can_id << std::dec
+        << " DLC=" << static_cast<int>(frame.can_dlc) << " RAW=[";
+    for (size_t i = 0; i < frame.can_dlc; ++i) {
+      if (i) {
+        oss << ' ';
+      }
+      oss << "0x" << std::setw(2) << std::setfill('0') << std::hex
+          << std::uppercase << static_cast<int>(frame.data[i]);
+    }
+    oss << std::dec << "]";
+
+    // Decode the physical value.
+    for (int mi = 0; mi < dbc_message_count; ++mi) {
+      const can_message_t &dbc = dbc_messages[mi];
+      if ((uint32_t)frame.can_id == dbc.message_id) {
+        for (uint8_t si = 0; si < dbc.signal_count; ++si) {
+          const can_signal_t &sig = dbc.signals[si];
+          float phys = decode_signal(&sig, frame.data);
+          oss << " | " << sig.name << "=" << phys; // TODO: Delete dev, print.
+        }
+        break;
+      }
+    }
+
+    RCLCPP_INFO(get_logger(), "%s", oss.str().c_str());
   }
 
 } // namespace scalpelspace_momentum_ros
