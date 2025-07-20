@@ -22,8 +22,6 @@ ROS2 package for CAN communication with the ScalpelSpace Momentum dev board.
 
 CAN communication is expected to be setup via SocketCAN drivers.
 
-**_THE FOLLOWING IS PLANNED/WIP:_**
-
 Utilizes a local copy of [
 `momentum_driver`](https://github.com/scalpelspace/momentum_driver) for low
 level CAN operations (local copy only includes the C code files):
