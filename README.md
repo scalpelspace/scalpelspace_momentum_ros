@@ -1,36 +1,16 @@
-# scalpelspace_momentum_ros
+![Logo](momentum_sdk/images/ScalpelSpace_temp_logo.png)
 
-![ros2_humble_build](https://github.com/scalpelspace/scalpelspace_momentum_ros/actions/workflows/ros2_humble_build.yaml/badge.svg)
 
-ROS2 package for CAN communication with the ScalpelSpace Momentum dev board.
+------
+ROS2 Packages for Momentum Board, it use Momentum SDK to publish data recieved from the board into ROS2 standard messages such as Imu, NavSatFix, FluidPressure, Temperature, NavSatStatus and TwistStamped.
 
----
+> [!NOTE] The documentation is in progress for this branch!
 
-<details markdown="1">
-  <summary>Table of Contents</summary>
+> [!IMPORTANT] Following ROS2 standards, there was created a bringup and driver packages using python. 
 
-<!-- TOC -->
-* [scalpelspace_momentum_ros](#scalpelspace_momentum_ros)
-  * [1 Overview](#1-overview)
-<!-- TOC -->
-
-</details>
-
----
-
-## 1 Overview
-
-CAN communication is expected to be setup via SocketCAN drivers.
-
-Utilizes a local copy of [
-`momentum_driver`](https://github.com/scalpelspace/momentum_driver) for low
-level CAN operations (local copy only includes the C code files):
-
-1. [src/momentum_driver](src/momentum_driver).
-2. [include/scalpelspace_momentum_ros/momentum_driver](include/scalpelspace_momentum_ros/momentum_driver).
-
-- Git submodule not utilized for reduced setup complexity for users.
-- Copies modified on `#include` filepaths to comply with standard ROS2 package
-  structures.
-
----
+* Notes for documentation
+1- Make a list of step to install dependecies
+2- Explain how the messages can be accessed by subscription in a demo
+3- Finish this readme and get approval for pushing into the main branch
+4- Fix Gyro faulty data, all axis are showing same value possible issue with the sdk
+5- Add documentation in the code

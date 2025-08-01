@@ -26,6 +26,12 @@ Icon
 # Thumbnails
 ._*
 
+build
+install
+log
+momentum_sdk/**/*.so
+.vscode
+
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100
 .fseventsd
