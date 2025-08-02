@@ -5,9 +5,6 @@
 ------
 ROS2 Packages for Momentum Board, it use Momentum SDK to publish data recieved from the board into ROS2 standard messages such as Imu, NavSatFix, FluidPressure, Temperature, NavSatStatus and TwistStamped.
 
-> [!NOTE] 
-> The documentation is in progress for this branch!
-
 > [!IMPORTANT]  
 > Following ROS2 standards, there was created a bringup and driver packages using python. 
 
