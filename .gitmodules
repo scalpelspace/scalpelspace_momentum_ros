@@ -1,3 +1,3 @@
 [submodule "momentum_sdk"]
 	path = momentum_sdk
-	url = git@github.com:scalpelspace/momentum_sdk.git
+	url = https://github.com/scalpelspace/momentum_sdk.git
