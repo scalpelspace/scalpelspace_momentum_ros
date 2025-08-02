@@ -12,7 +12,7 @@ ROS2 Packages for Momentum Board, it use Momentum SDK to publish data recieved f
 > Following ROS2 standards, there was created a bringup and driver packages using python. 
 
 > [!WARNING]
-> If you want to use **Momentum SDK** outside ROS2 for C++ or Python projects please go to [Momentum SDK repo](https://github.com/scalpelspace/momentum_sdk.git)
+> If you want to use **Momentum SDK** outside ROS2 for C++ or Python projects please go to [Momentum SDK repo](https://github.com/scalpelspace/momentum_sdk.git). This will also generate all python bindings definitions.
 
 #### Table of Contents
 
