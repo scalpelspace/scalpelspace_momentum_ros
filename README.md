@@ -16,12 +16,13 @@ ROS2 Packages for Momentum Board, it use Momentum SDK to publish data recieved f
 
 #### Table of Contents
 
-- [Install Dependecies](#installdependecies)
-- [ROS2 Installation](#ROS2installation)
-    - [How to install ROS2 Humble](#howtoinstallros2humble)
-    - [Setting Workspace](#settingworskspace)
-- [Subscribing to Momentum ROS2](#subscribinttomomentumros2)
--
+- [Install Dependencies](#install-dependencies)
+- [ROS2 Installation](#ros2-installation)
+    - [How to install ROS2 Humble](#how-to-install-ros2-humble)
+    - [Setting Workspace](#setting-workspace)
+- [Subscribing to Momentum ROS2](#subscribing-to-momentum-ros2)
+- [Momentum ROS2 messages type](#momentum-ros2-messages-type)
+
 
 > [!IMPORTANT]
 > Run all this commands in your terminal
@@ -69,14 +70,14 @@ sudo ip link set can0 up type can bitrate 5000000
 > [!IMPORTANT]
 > ROS2 Humble is the only distro tested with this packages. 
 
-* **How to install ROS2 Humble**
+#### How to install ROS2 Humble
 please follow installation steps from the main documentation for [ROS2 Humble](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html)
 
 After installation run this command:
 ```bash
 sudo apt install ros-humble-sensor-msgs ros-humble-geometry-msgs
 ```
-* **Setting Workspace**
+#### Setting Workspace
 Now lets set a workspace if you dont have one yet
 ```bash
 source /opt/ros/humble/setup.bash
