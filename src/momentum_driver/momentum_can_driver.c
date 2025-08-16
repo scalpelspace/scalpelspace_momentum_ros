@@ -126,7 +126,7 @@ float decode_signal(const can_signal_t *signal, const uint8_t *data) {
     raw_value |= (bit << i); // Assemble raw LSB-first.
   }
 
-  // phys = raw * scale + offset.
+  // Phys = raw * scale + offset.
   return (float)((double)raw_value * (double)signal->scale +
                  (double)signal->offset);
 }
