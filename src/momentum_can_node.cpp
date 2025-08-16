@@ -38,7 +38,15 @@ namespace scalpelspace_momentum_ros {
       return;
     }
 
-    pub_ = create_publisher<can_msgs::msg::Frame>("received_frames", 10);
+    RCLCPP_INFO(get_logger(), "Momentum is succesfully connected to CAN interface: %s", ifr.ifr_name);
+    RCLCPP_INFO(get_logger(), "Run 'ros2 topic list' to check data'");
+
+    momentum_imu_pub_ = create_publisher<sensor_msgs::msg::Imu>("momentum/imu_data", 10);
+    momentum_gps_pub_ = create_publisher<sensor_msgs::msg::NavSatFix>("momentum/gps_fix", 10);
+    momentum_vel_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("momentum/gps_velocity", 10);
+    momentum_pressure_pub_ = create_publisher<sensor_msgs::msg::FluidPressure>("momentum/pressure", 10);
+    momentum_temp_pub_ = create_publisher<sensor_msgs::msg::Temperature>("momentum/temperature", 10);
+
     timer_ = create_wall_timer(std::chrono::milliseconds(10),
                                std::bind(&MomentumCanNode::poll_can, this));
   }
@@ -57,29 +65,7 @@ namespace scalpelspace_momentum_ros {
       return;
     }
 
-    // Publish ROS message of raw CAN message.
-    can_msgs::msg::Frame msg;
-    msg.id = frame.can_id;
-    msg.dlc = frame.can_dlc;
-    msg.is_extended = (frame.can_id & CAN_EFF_FLAG);
-    msg.is_rtr = (frame.can_id & CAN_RTR_FLAG);
-    for (size_t i = 0; i < frame.can_dlc && i < msg.data.size(); ++i) {
-      msg.data[i] = frame.data[i];
-    }
-    pub_->publish(msg);
-
-    // TODO: Delete dev, print.
-    std::ostringstream oss;
-    oss << "CAN ID=0x" << std::hex << std::uppercase << frame.can_id << std::dec
-        << " DLC=" << static_cast<int>(frame.can_dlc) << " RAW=[";
-    for (size_t i = 0; i < frame.can_dlc; ++i) {
-      if (i) {
-        oss << ' ';
-      }
-      oss << "0x" << std::setw(2) << std::setfill('0') << std::hex
-          << std::uppercase << static_cast<int>(frame.data[i]);
-    }
-    oss << std::dec << "]";
+    static std::unordered_map<std::string, float> signals;
 
     // Decode the physical value.
     for (int mi = 0; mi < dbc_message_count; ++mi) {
@@ -88,13 +74,72 @@ namespace scalpelspace_momentum_ros {
         for (uint8_t si = 0; si < dbc.signal_count; ++si) {
           const can_signal_t &sig = dbc.signals[si];
           float phys = decode_signal(&sig, frame.data);
-          oss << " | " << sig.name << "=" << phys; // TODO: Delete dev, print.
+          signals[sig.name] = phys;
         }
         break;
       }
     }
 
-    RCLCPP_INFO(get_logger(), "%s", oss.str().c_str());
+    auto now = this->get_clock()->now();
+
+    if (signals.count("quaternion_x") && signals.count("quaternion_y") && signals.count("quaternion_z") 
+        && signals.count("quaternion_w") && signals.count("gyro_x") && signals.count("gyro_y") && signals.count("gyro_z")
+        && signals.count("lin_accel_x") && signals.count("lin_accel_y") && signals.count("lin_accel_z")) {
+      sensor_msgs::msg::Imu imu;
+      imu.header.stamp = now;
+      imu.header.frame_id = "imu_link";
+      imu.orientation.x = signals["quaternion_x"];
+      imu.orientation.y = signals["quaternion_y"];
+      imu.orientation.z = signals["quaternion_z"];
+      imu.orientation.w = signals["quaternion_w"];
+      imu.angular_velocity.x = signals["gyro_x"];
+      imu.angular_velocity.y = signals["gyro_y"];
+      imu.angular_velocity.z = signals["gyro_z"];
+      imu.linear_acceleration.x = signals["lin_accel_x"];
+      imu.linear_acceleration.y = signals["lin_accel_y"];
+      imu.linear_acceleration.z = signals["lin_accel_z"];
+
+      imu.orientation_covariance[0] = -1;
+      imu.angular_velocity_covariance[0] = -1;
+      imu.linear_acceleration_covariance[0] = -1;
+      momentum_imu_pub_->publish(imu);
+    } 
+
+    if (signals.count("latitude") && signals.count("longitude") && signals.count("altitude")){
+      sensor_msgs::msg::NavSatFix gps;
+      gps.header.stamp = now;
+      gps.header.frame_id = "gps_link";
+      gps.latitude = signals["latitude"];
+      gps.longitude = signals["longitude"];
+      gps.altitude = signals["altitude"];
+      gps.position_covariance[0] = -1;
+      momentum_gps_pub_->publish(gps); 
+      
+      if (signals.count("speed") && signals.count("course")){
+        geometry_msgs::msg::TwistStamped vel;
+        vel.header = gps.header;
+        float spd = signals["speed"];
+        float crs = signals["course"] * M_PI / 180.0;
+        vel.twist.linear.x = spd * cos(crs);
+        vel.twist.linear.y = spd * cos(crs);
+        momentum_vel_pub_->publish(vel);
+      }
+    }
+
+    if (signals.count("pressure")){
+        sensor_msgs::msg::FluidPressure prs;
+        prs.header.stamp = now;
+        prs.header.frame_id = "barometric_link";
+        prs.fluid_pressure = signals["pressure"];
+        momentum_pressure_pub_->publish(prs);
+        
+        if (signals.count("temperature")){
+          sensor_msgs::msg::Temperature temp;
+          temp.header = prs.header;
+          temp.temperature = signals["temperature"];
+          momentum_temp_pub_->publish(temp);
+        }
+    } 
   }
 
 } // namespace scalpelspace_momentum_ros

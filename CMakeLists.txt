@@ -5,6 +5,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(can_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 include_directories(
         include
@@ -20,8 +22,9 @@ add_executable(momentum_can_node
 
 ament_target_dependencies(momentum_can_node
         rclcpp
-        can_msgs
         std_msgs
+        sensor_msgs
+        geometry_msgs
 )
 
 install(TARGETS momentum_can_node
