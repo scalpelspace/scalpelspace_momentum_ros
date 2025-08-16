@@ -6,7 +6,7 @@
 
 /** Includes. *****************************************************************/
 
-#include "scalpelspace_momentum_ros/momentum_driver/momentum_can_driver.h"
+#include "momentum_can_driver.h"
 #include "math.h"
 
 /** Public functions. *********************************************************/
@@ -59,26 +59,36 @@ uint32_t double_to_raw(double physical_value, const can_signal_t *signal) {
   return raw;
 }
 
-void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
-                       uint32_t raw_value) {
-  // Mask off any bits above bit_length.
+static inline void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
+                                     uint32_t raw_value) {
+  // Mask raw_value to bit_length (and avoid UB on 32).
+  if (signal->bit_length == 0)
+    return;
   if (signal->bit_length < 32) {
-    raw_value &= ((1UL << signal->bit_length) - 1UL);
+    raw_value &= (uint32_t)((1u << signal->bit_length) - 1u);
   }
 
-  // Pack each bit into data[].
-  for (uint32_t bit = 0; bit < signal->bit_length; ++bit) {
-    // Determine the absolute bit position in the 64‑bit CAN payload.
-    uint32_t bit_pos = (signal->byte_order == CAN_LITTLE_ENDIAN)
-                           ? (signal->start_bit + bit)  // Intel/little‑endian.
-                           : (signal->start_bit - bit); // Motorola/big‑endian.
+  for (uint32_t i = 0; i < signal->bit_length; ++i) {
+    uint32_t byte_index, bit_index; // bit_index: 0 = LSB of byte.
 
-    uint32_t byte_index = bit_pos / 8;
-    uint32_t bit_index = bit_pos % 8;
+    if (signal->byte_order == CAN_LITTLE_ENDIAN) {
+      // Intel: LSB-first across payload.
+      const uint32_t bit_pos = signal->start_bit + i;
+      byte_index = bit_pos / 8;
+      bit_index = bit_pos % 8;
+    } else {
+      // Motorola: MSB-first within a byte, then previous byte.
+      const uint32_t start_byte = signal->start_bit / 8;
+      const uint32_t start_bit_in_byte = 7u - (signal->start_bit % 8u); // 0..7.
+      const uint32_t msb_walk = start_bit_in_byte + i; // Walk in MSB space.
+      byte_index = start_byte - (msb_walk / 8u);
+      bit_index = 7u - (msb_walk % 8u);
+    }
 
-    // Extract the next raw bit, then OR it into the right place.
-    uint8_t raw_bit = (raw_value >> bit) & 0x1U;
-    data[byte_index] |= (raw_bit << bit_index);
+    const uint8_t bit = (uint8_t)((raw_value >> i) & 0x1u);
+    // Clear then set to avoid leaving stale bits if buffer is reused.
+    data[byte_index] =
+        (uint8_t)((data[byte_index] & ~(1u << bit_index)) | (bit << bit_index));
   }
 }
 
