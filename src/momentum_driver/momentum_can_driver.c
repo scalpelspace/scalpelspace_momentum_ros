@@ -93,23 +93,32 @@ void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
 }
 
 float decode_signal(const can_signal_t *signal, const uint8_t *data) {
-  uint64_t raw_value = 0;
+  if (signal->bit_length == 0)
+    return 0.0f;
 
-  // Extract raw bits from the CAN message payload.
-  for (int i = 0; i < signal->bit_length; i++) {
-    int bit_position = signal->start_bit + i;
-    int byte_index = bit_position / 8;
-    int bit_index = bit_position % 8;
+  uint32_t raw = 0;
 
-    // Use the enumerated constant for byte order.
-    if (signal->byte_order == CAN_BIG_ENDIAN) {
-      raw_value |= ((data[byte_index] >> (7 - bit_index)) & 0x1)
-                   << (signal->bit_length - 1 - i);
-    } else { // CAN_LITTLE_ENDIAN.
-      raw_value |= ((data[byte_index] >> bit_index) & 0x1) << i;
+  for (uint32_t i = 0; i < signal->bit_length; ++i) {
+    uint32_t byte_index, bit_index; // bit_index: 0 = LSB of byte.
+
+    if (signal->byte_order == CAN_LITTLE_ENDIAN) {
+      // Intel: LSB-first across payload.
+      const uint32_t bit_pos = signal->start_bit + i;
+      byte_index = bit_pos / 8;
+      bit_index = bit_pos % 8;
+    } else {
+      // Motorola: MSB-first within a byte, then previous byte.
+      const uint32_t start_byte = signal->start_bit / 8;
+      const uint32_t start_bit_in_byte = 7u - (signal->start_bit % 8u); // 0..7.
+      const uint32_t msb_walk = start_bit_in_byte + i; // Walk in MSB space.
+      byte_index = start_byte - (msb_walk / 8u);
+      bit_index = 7u - (msb_walk % 8u);
     }
+
+    const uint64_t bit = (uint64_t)((data[byte_index] >> bit_index) & 0x1u);
+    raw |= (bit << i); // Assemble raw LSB-first.
   }
 
-  // Convert raw value to physical value by applying scale and offset.
-  return ((float)raw_value * signal->scale) + signal->offset;
+  // Apply scale and offset (raw -> physical).
+  return (float)((double)raw * (double)signal->scale + (double)signal->offset);
 }
