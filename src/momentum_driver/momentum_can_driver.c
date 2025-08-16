@@ -77,15 +77,15 @@ void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
     if (signal->byte_order == CAN_LITTLE_ENDIAN) {
       // Intel: linear walk across payload.
       const uint32_t pos = signal->start_bit + i;
-      byte_index = pos / 8u;
-      bit_index = pos % 8u;
+      byte_index = pos >> 3;
+      bit_index = pos & 7u;
     } else {
       // Motorola: MSB-first walk within a byte, then previous byte.
-      const uint32_t start_byte = signal->start_bit / 8u;
-      const uint32_t start_bit_in_byte = 7u - (signal->start_bit % 8u); // 0..7.
+      const uint32_t start_byte = signal->start_bit >> 3;
+      const uint32_t start_bit_in_byte = 7u - (signal->start_bit & 7u); // 0..7.
       const uint32_t msb_walk = start_bit_in_byte + i;
-      byte_index = start_byte - (msb_walk / 8u);
-      bit_index = 7u - (msb_walk % 8u);
+      byte_index = start_byte - (msb_walk >> 3);
+      bit_index = 7u - (msb_walk & 7u);
     }
 
     const uint8_t bit = (uint8_t)((raw_value >> i) & 1u);
@@ -111,15 +111,15 @@ float decode_signal(const can_signal_t *signal, const uint8_t *data) {
     if (signal->byte_order == CAN_LITTLE_ENDIAN) {
       // Intel: linear walk across payload.
       const uint32_t pos = signal->start_bit + i;
-      byte_index = pos / 8u;
-      bit_index = pos % 8u;
+      byte_index = pos >> 3;
+      bit_index = pos & 7u;
     } else {
       // Motorola: MSB-first walk within a byte, then previous byte.
-      const uint32_t start_byte = signal->start_bit / 8u;
-      const uint32_t start_bit_in_byte = 7u - (signal->start_bit % 8u); // 0..7.
+      const uint32_t start_byte = signal->start_bit >> 3;
+      const uint32_t start_bit_in_byte = 7u - (signal->start_bit & 7u); // 0..7.
       const uint32_t msb_walk = start_bit_in_byte + i;
-      byte_index = start_byte - (msb_walk / 8u);
-      bit_index = 7u - (msb_walk % 8u);
+      byte_index = start_byte - (msb_walk >> 3);
+      bit_index = 7u - (msb_walk & 7u);
     }
 
     const uint32_t bit = (uint32_t)((data[byte_index] >> bit_index) & 1u);
