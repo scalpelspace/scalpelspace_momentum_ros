@@ -115,7 +115,7 @@ float decode_signal(const can_signal_t *signal, const uint8_t *data) {
       bit_index = 7u - (msb_walk % 8u);
     }
 
-    const uint64_t bit = (uint64_t)((data[byte_index] >> bit_index) & 0x1u);
+    const uint32_t bit = (uint32_t)((data[byte_index] >> bit_index) & 0x1u);
     raw |= (bit << i); // Assemble raw LSB-first.
   }
 
