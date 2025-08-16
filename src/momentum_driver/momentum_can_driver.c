@@ -59,8 +59,8 @@ uint32_t double_to_raw(double physical_value, const can_signal_t *signal) {
   return raw;
 }
 
-static inline void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
-                                     uint32_t raw_value) {
+void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
+                       uint32_t raw_value) {
   // Mask raw_value to bit_length (and avoid UB on 32).
   if (signal->bit_length == 0)
     return;
