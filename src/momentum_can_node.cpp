@@ -38,14 +38,21 @@ namespace scalpelspace_momentum_ros {
       return;
     }
 
-    RCLCPP_INFO(get_logger(), "Momentum is succesfully connected to CAN interface: %s", ifr.ifr_name);
+    RCLCPP_INFO(get_logger(),
+                "Momentum is successfully connected to CAN interface: %s",
+                ifr.ifr_name);
     RCLCPP_INFO(get_logger(), "Run 'ros2 topic list' to check data'");
 
-    momentum_imu_pub_ = create_publisher<sensor_msgs::msg::Imu>("momentum/imu_data", 10);
-    momentum_gps_pub_ = create_publisher<sensor_msgs::msg::NavSatFix>("momentum/gps_fix", 10);
-    momentum_vel_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("momentum/gps_velocity", 10);
-    momentum_pressure_pub_ = create_publisher<sensor_msgs::msg::FluidPressure>("momentum/pressure", 10);
-    momentum_temp_pub_ = create_publisher<sensor_msgs::msg::Temperature>("momentum/temperature", 10);
+    momentum_imu_pub_ =
+        create_publisher<sensor_msgs::msg::Imu>("momentum/imu_data", 10);
+    momentum_gps_pub_ =
+        create_publisher<sensor_msgs::msg::NavSatFix>("momentum/gps_fix", 10);
+    momentum_vel_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>(
+        "momentum/gps_velocity", 10);
+    momentum_pressure_pub_ = create_publisher<sensor_msgs::msg::FluidPressure>(
+        "momentum/pressure", 10);
+    momentum_temp_pub_ = create_publisher<sensor_msgs::msg::Temperature>(
+        "momentum/temperature", 10);
 
     timer_ = create_wall_timer(std::chrono::milliseconds(10),
                                std::bind(&MomentumCanNode::poll_can, this));
@@ -82,9 +89,11 @@ namespace scalpelspace_momentum_ros {
 
     auto now = this->get_clock()->now();
 
-    if (signals.count("quaternion_x") && signals.count("quaternion_y") && signals.count("quaternion_z") 
-        && signals.count("quaternion_w") && signals.count("gyro_x") && signals.count("gyro_y") && signals.count("gyro_z")
-        && signals.count("lin_accel_x") && signals.count("lin_accel_y") && signals.count("lin_accel_z")) {
+    if (signals.count("quaternion_x") && signals.count("quaternion_y") &&
+        signals.count("quaternion_z") && signals.count("quaternion_w") &&
+        signals.count("gyro_x") && signals.count("gyro_y") &&
+        signals.count("gyro_z") && signals.count("lin_accel_x") &&
+        signals.count("lin_accel_y") && signals.count("lin_accel_z")) {
       sensor_msgs::msg::Imu imu;
       imu.header.stamp = now;
       imu.header.frame_id = "imu_link";
@@ -103,9 +112,10 @@ namespace scalpelspace_momentum_ros {
       imu.angular_velocity_covariance[0] = -1;
       imu.linear_acceleration_covariance[0] = -1;
       momentum_imu_pub_->publish(imu);
-    } 
+    }
 
-    if (signals.count("latitude") && signals.count("longitude") && signals.count("altitude")){
+    if (signals.count("latitude") && signals.count("longitude") &&
+        signals.count("altitude")) {
       sensor_msgs::msg::NavSatFix gps;
       gps.header.stamp = now;
       gps.header.frame_id = "gps_link";
@@ -113,9 +123,9 @@ namespace scalpelspace_momentum_ros {
       gps.longitude = signals["longitude"];
       gps.altitude = signals["altitude"];
       gps.position_covariance[0] = -1;
-      momentum_gps_pub_->publish(gps); 
-      
-      if (signals.count("speed") && signals.count("course")){
+      momentum_gps_pub_->publish(gps);
+
+      if (signals.count("speed") && signals.count("course")) {
         geometry_msgs::msg::TwistStamped vel;
         vel.header = gps.header;
         float spd = signals["speed"];
@@ -126,20 +136,20 @@ namespace scalpelspace_momentum_ros {
       }
     }
 
-    if (signals.count("pressure")){
-        sensor_msgs::msg::FluidPressure prs;
-        prs.header.stamp = now;
-        prs.header.frame_id = "barometric_link";
-        prs.fluid_pressure = signals["pressure"];
-        momentum_pressure_pub_->publish(prs);
-        
-        if (signals.count("temperature")){
-          sensor_msgs::msg::Temperature temp;
-          temp.header = prs.header;
-          temp.temperature = signals["temperature"];
-          momentum_temp_pub_->publish(temp);
-        }
-    } 
+    if (signals.count("pressure")) {
+      sensor_msgs::msg::FluidPressure prs;
+      prs.header.stamp = now;
+      prs.header.frame_id = "barometric_link";
+      prs.fluid_pressure = signals["pressure"];
+      momentum_pressure_pub_->publish(prs);
+
+      if (signals.count("temperature")) {
+        sensor_msgs::msg::Temperature temp;
+        temp.header = prs.header;
+        temp.temperature = signals["temperature"];
+        momentum_temp_pub_->publish(temp);
+      }
+    }
   }
 
 } // namespace scalpelspace_momentum_ros
