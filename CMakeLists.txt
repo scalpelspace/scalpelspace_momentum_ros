@@ -21,10 +21,10 @@ add_executable(momentum_can_node
 )
 
 ament_target_dependencies(momentum_can_node
+        geometry_msgs
         rclcpp
         std_msgs
         sensor_msgs
-        geometry_msgs
 )
 
 install(TARGETS momentum_can_node
