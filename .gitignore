@@ -8,6 +8,9 @@
 # Based on: https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore.
 .idea/
 
+# Visual Studio Code IDE
+.vscode
+
 ################################################################################
 # macos.gitignore
 #

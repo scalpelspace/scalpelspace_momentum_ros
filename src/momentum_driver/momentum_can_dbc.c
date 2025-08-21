@@ -6,7 +6,7 @@
 
 /** Includes. *****************************************************************/
 
-#include "scalpelspace_momentum_ros/momentum_driver/momentum_can_dbc.h"
+#include "momentum_can_dbc.h"
 
 /** Public variables. *********************************************************/
 

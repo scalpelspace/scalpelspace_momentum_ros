@@ -6,7 +6,7 @@
 
 /** Includes. *****************************************************************/
 
-#include "scalpelspace_momentum_ros/momentum_driver/momentum_can_driver.h"
+#include "momentum_can_driver.h"
 #include "math.h"
 
 /** Public functions. *********************************************************/
@@ -61,45 +61,72 @@ uint32_t double_to_raw(double physical_value, const can_signal_t *signal) {
 
 void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
                        uint32_t raw_value) {
-  // Mask off any bits above bit_length.
+  if (!signal || !data)
+    return;
+  if (signal->bit_length == 0)
+    return;
+
+  // Mask raw_value to width (safe when bit_length == 32).
   if (signal->bit_length < 32) {
-    raw_value &= ((1UL << signal->bit_length) - 1UL);
+    raw_value &= (uint32_t)((1u << signal->bit_length) - 1u);
   }
 
-  // Pack each bit into data[].
-  for (uint32_t bit = 0; bit < signal->bit_length; ++bit) {
-    // Determine the absolute bit position in the 64‑bit CAN payload.
-    uint32_t bit_pos = (signal->byte_order == CAN_LITTLE_ENDIAN)
-                           ? (signal->start_bit + bit)  // Intel/little‑endian.
-                           : (signal->start_bit - bit); // Motorola/big‑endian.
+  for (uint32_t i = 0; i < signal->bit_length; ++i) {
+    uint32_t byte_index, bit_index; // bit_index: 0 = LSB of that byte.
 
-    uint32_t byte_index = bit_pos / 8;
-    uint32_t bit_index = bit_pos % 8;
+    if (signal->byte_order == CAN_LITTLE_ENDIAN) {
+      // Intel: linear walk across payload.
+      const uint32_t pos = signal->start_bit + i;
+      byte_index = pos >> 3;
+      bit_index = pos & 7u;
+    } else {
+      // Motorola: MSB-first walk within a byte, then previous byte.
+      const uint32_t start_byte = signal->start_bit >> 3;
+      const uint32_t start_bit_in_byte = 7u - (signal->start_bit & 7u); // 0..7.
+      const uint32_t msb_walk = start_bit_in_byte + i;
+      byte_index = start_byte - (msb_walk >> 3);
+      bit_index = 7u - (msb_walk & 7u);
+    }
 
-    // Extract the next raw bit, then OR it into the right place.
-    uint8_t raw_bit = (raw_value >> bit) & 0x1U;
-    data[byte_index] |= (raw_bit << bit_index);
+    const uint8_t bit = (uint8_t)((raw_value >> i) & 1u);
+
+    // Clear then set (safe if buffer is reused between frames).
+    data[byte_index] =
+        (uint8_t)((data[byte_index] & (uint8_t)~(1u << bit_index)) |
+                  (uint8_t)(bit << bit_index));
   }
 }
 
 float decode_signal(const can_signal_t *signal, const uint8_t *data) {
-  uint64_t raw_value = 0;
+  if (!signal || !data)
+    return 0.0f;
+  if (signal->bit_length == 0)
+    return 0.0f;
 
-  // Extract raw bits from the CAN message payload.
-  for (int i = 0; i < signal->bit_length; i++) {
-    int bit_position = signal->start_bit + i;
-    int byte_index = bit_position / 8;
-    int bit_index = bit_position % 8;
+  uint32_t raw_value = 0;
 
-    // Use the enumerated constant for byte order.
-    if (signal->byte_order == CAN_BIG_ENDIAN) {
-      raw_value |= ((data[byte_index] >> (7 - bit_index)) & 0x1)
-                   << (signal->bit_length - 1 - i);
-    } else { // CAN_LITTLE_ENDIAN.
-      raw_value |= ((data[byte_index] >> bit_index) & 0x1) << i;
+  for (uint32_t i = 0; i < signal->bit_length; ++i) {
+    uint32_t byte_index, bit_index; // bit_index: 0 = LSB of that byte.
+
+    if (signal->byte_order == CAN_LITTLE_ENDIAN) {
+      // Intel: linear walk across payload.
+      const uint32_t pos = signal->start_bit + i;
+      byte_index = pos >> 3;
+      bit_index = pos & 7u;
+    } else {
+      // Motorola: MSB-first walk within a byte, then previous byte.
+      const uint32_t start_byte = signal->start_bit >> 3;
+      const uint32_t start_bit_in_byte = 7u - (signal->start_bit & 7u); // 0..7.
+      const uint32_t msb_walk = start_bit_in_byte + i;
+      byte_index = start_byte - (msb_walk >> 3);
+      bit_index = 7u - (msb_walk & 7u);
     }
+
+    const uint32_t bit = (uint32_t)((data[byte_index] >> bit_index) & 1u);
+    raw_value |= (bit << i); // Assemble raw LSB-first.
   }
 
-  // Convert raw value to physical value by applying scale and offset.
-  return ((float)raw_value * signal->scale) + signal->offset;
+  // Phys = raw * scale + offset.
+  return (float)((double)raw_value * (double)signal->scale +
+                 (double)signal->offset);
 }
