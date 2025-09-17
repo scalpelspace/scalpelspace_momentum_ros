@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @file momentum_can_driver.h
- * @brief Momentum driver for CAN based communication.
+ * @brief Momentum driver for CAN bus based communication.
  *******************************************************************************
  */
 
@@ -63,6 +63,7 @@ typedef struct {
   uint8_t start_bit;           // Start bit-position (0-63 for 8-byte CAN).
   uint8_t bit_length;          // Length of the signal in bits.
   can_byte_order_t byte_order; // Byte order: little or big endian.
+  bool is_signed;              // Mark for signed or unsigned type.
   float scale;     // Scaling factor to convert raw value to physical value.
   float offset;    // Offset to apply after scaling.
   float min_value; // Minimum physical value (optional validation).
@@ -90,41 +91,21 @@ typedef struct {
 /** Public functions. *********************************************************/
 
 /**
- * @brief Normalize physical values (uint32_t) to uint32_t for raw CAN signals.
+ * @brief Normalize physical values to uint32_t raw values.
  *
- * @param physical_value Physical uint32_t value.
+ * @param physical_value Physical double type value.
  * @param signal Reference signal to ensure clamping and normalization.
  *
  * @return Normalized raw uint32_t data.
  */
-uint32_t uint_to_raw(uint32_t physical_value, const can_signal_t *signal);
+uint32_t physical_to_raw(double physical_value, const can_signal_t *signal);
 
 /**
- * @breif Normalize physical values (float) to uint32_t for raw CAN signals.
- *
- * @param physical_value Physical float value.
- * @param signal Reference signal to ensure clamping and normalization.
- *
- * @return Normalized raw uint32_t data.
- */
-uint32_t float_to_raw(float physical_value, const can_signal_t *signal);
-
-/**
- * @breif Normalize physical values (double) to uint32_t for raw CAN signals.
- *
- * @param physical_value Physical double value.
- * @param signal Reference signal to ensure clamping and normalization.
- *
- * @return Normalized raw uint32_t data.
- */
-uint32_t double_to_raw(double physical_value, const can_signal_t *signal);
-
-/**
- * @brief Packs a uint32_t value into the CAN message data buffer.
+ * @brief Packs an uint32_t value into the CAN message data buffer.
  *
  * @param signal Pointer to the signal definition.
  * @param data Pointer to the CAN data array.
- * @param physical_value The physical value to encode.
+ * @param raw_value The physical value to encode.
  */
 void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
                        uint32_t raw_value);
@@ -141,7 +122,7 @@ void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
  *
  * @return The decoded physical signal value.
  */
-float decode_signal(const can_signal_t *signal, const uint8_t *data);
+double decode_signal(const can_signal_t *signal, const uint8_t *data);
 
 /** CPP guard close. **********************************************************/
 
