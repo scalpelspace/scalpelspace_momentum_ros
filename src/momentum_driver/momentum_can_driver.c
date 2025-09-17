@@ -1,6 +1,6 @@
 /*******************************************************************************
  * @file momentum_can_driver.c
- * @brief Momentum driver for CAN based communication.
+ * @brief Momentum driver for CAN bus based communication.
  *******************************************************************************
  */
 
@@ -9,54 +9,56 @@
 #include "momentum_can_driver.h"
 #include "math.h"
 
+/** Private functions. ********************************************************/
+
+static int32_t sign_extend_u32(const uint32_t raw_value,
+                               const uint8_t length_bits) {
+  if (length_bits == 0 || length_bits >= 32)
+    return (int32_t)raw_value;
+  const uint32_t shift = 32u - length_bits;
+  return (int32_t)((raw_value << shift) >> shift); // Right shift sign-extend.
+}
+
+static uint32_t clamp_raw(double physical_value, const uint8_t length_bits,
+                          const bool is_signed) {
+  const double low = is_signed ? -(double)(1u << (length_bits - 1)) : 0.0;
+  const double high =
+      is_signed ? (double)((1u << (length_bits - 1)) - 1u)
+                : (double)((length_bits == 32) ? 0xFFFFFFFFu
+                                               : ((1u << length_bits) - 1u));
+  if (physical_value < low)
+    physical_value = low;
+  if (physical_value > high)
+    physical_value = high;
+  const long long r = llround(physical_value); // Round before cast.
+  if (r < 0) {
+    return (uint32_t)r; // Two's complement bit pattern is preserved by cast.
+  }
+  return (uint32_t)r;
+}
+
+static double raw_to_physical(const uint32_t raw_value,
+                              const can_signal_t *signal) {
+  const int32_t v = signal->is_signed
+                        ? sign_extend_u32(raw_value, signal->bit_length)
+                        : (int32_t)raw_value;
+  return (double)v * signal->scale + signal->offset;
+}
+
 /** Public functions. *********************************************************/
 
-uint32_t uint_to_raw(uint32_t physical_value, const can_signal_t *signal) {
-  // Clamp physical value into [min, max].
-  if (physical_value < (uint32_t)signal->min_value)
-    physical_value = (uint32_t)signal->min_value;
-  if (physical_value > (uint32_t)signal->max_value)
-    physical_value = (uint32_t)signal->max_value;
+uint32_t physical_to_raw(double physical_value, const can_signal_t *signal) {
+  if (signal->scale == 0.0) {
+    return 0;
+  }
 
-  // Normalize into raw units (cast to float just for the calculation).
-  float normalized = ((float)physical_value - signal->offset) / signal->scale;
-
-  // Round to nearest uint32_t.
-  uint32_t raw = (uint32_t)roundf(normalized);
-
-  return raw;
-}
-
-uint32_t float_to_raw(float physical_value, const can_signal_t *signal) {
-  // Clamp physical value into [min, max].
+  // Clamp physical value to expected range.
   if (physical_value < signal->min_value)
     physical_value = signal->min_value;
   if (physical_value > signal->max_value)
     physical_value = signal->max_value;
-
-  // Normalize into raw units.
-  float normalized = (physical_value - signal->offset) / signal->scale;
-
-  // Round to nearest uint32_t.
-  uint32_t raw = (uint32_t)roundf(normalized);
-
-  return raw;
-}
-
-uint32_t double_to_raw(double physical_value, const can_signal_t *signal) {
-  // Clamp physical value into [min, max].
-  if (physical_value < signal->min_value)
-    physical_value = signal->min_value;
-  if (physical_value > signal->max_value)
-    physical_value = signal->max_value;
-
-  // Normalize into raw units.
-  double normalized = (physical_value - signal->offset) / signal->scale;
-
-  // Round to nearest uint32_t.
-  uint32_t raw = (uint32_t)llround(normalized);
-
-  return raw;
+  const double scaled = (physical_value - signal->offset) / signal->scale;
+  return clamp_raw(scaled, signal->bit_length, signal->is_signed);
 }
 
 void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
@@ -97,7 +99,7 @@ void pack_signal_raw32(const can_signal_t *signal, uint8_t *data,
   }
 }
 
-float decode_signal(const can_signal_t *signal, const uint8_t *data) {
+double decode_signal(const can_signal_t *signal, const uint8_t *data) {
   if (!signal || !data)
     return 0.0f;
   if (signal->bit_length == 0)
@@ -127,6 +129,5 @@ float decode_signal(const can_signal_t *signal, const uint8_t *data) {
   }
 
   // Phys = raw * scale + offset.
-  return (float)((double)raw_value * (double)signal->scale +
-                 (double)signal->offset);
+  return raw_to_physical(raw_value, signal);
 }

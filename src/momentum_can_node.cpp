@@ -72,7 +72,7 @@ namespace scalpelspace_momentum_ros {
       return;
     }
 
-    static std::unordered_map<std::string, float> signals;
+    static std::unordered_map<std::string, double> signals;
 
     // Decode the physical value.
     for (int mi = 0; mi < dbc_message_count; ++mi) {
@@ -80,7 +80,7 @@ namespace scalpelspace_momentum_ros {
       if ((uint32_t)frame.can_id == dbc.message_id) {
         for (uint8_t si = 0; si < dbc.signal_count; ++si) {
           const can_signal_t &sig = dbc.signals[si];
-          float phys = decode_signal(&sig, frame.data);
+          double phys = decode_signal(&sig, frame.data);
           signals[sig.name] = phys;
         }
         break;
