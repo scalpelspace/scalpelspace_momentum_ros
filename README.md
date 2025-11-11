@@ -65,6 +65,8 @@ To use this ROS2 package, start by cloning this repo and running colcon build.
    ros2 run scalpelspace_momentum_ros momentum_can_node
    ```
 
+---
+
 ## 3 Topics and Subscribers
 
 5 topics are published by this package:
